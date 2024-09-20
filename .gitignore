@@ -17,3 +17,12 @@ bin/
 
 oauth.properties
 *.zip
+/.idea/aws.xml
+/.idea/gradle.xml
+/.idea/jarRepositories.xml
+/.idea/jpa-buddy.xml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/msgraph-training-java.iml
+/.idea/JetClient/state.xml
+/.idea/vcs.xml

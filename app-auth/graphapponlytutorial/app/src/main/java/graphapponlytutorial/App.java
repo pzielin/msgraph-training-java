@@ -39,7 +39,7 @@ public class App {
             System.out.println("1. Display access token");
             System.out.println("2. List users");
             System.out.println("3. Make a Graph call");
-
+            makeGraphCall();
             try {
                 choice = input.nextInt();
             } catch (InputMismatchException ex) {
