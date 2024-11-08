@@ -1,7 +1,3 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT license.
-
-// <ImportSnippet>
 package graphapponlytutorial;
 
 import com.azure.core.credential.AccessToken;
@@ -23,11 +19,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.CancellationException;
-// </ImportSnippet>
 
 public class Graph {
-    // <AppOnyAuthConfigSnippet>
     private static Properties _properties;
     private static ClientSecretCredential _clientSecretCredential;
     private static GraphServiceClient graphClient;
@@ -46,20 +39,19 @@ public class Graph {
             final String clientSecret = _properties.getProperty("app.clientSecret");
 
             _clientSecretCredential = new ClientSecretCredentialBuilder()
-                .clientId(clientId)
-                .tenantId(tenantId)
-                .clientSecret(clientSecret)
-                .build();
+                    .clientId(clientId)
+                    .tenantId(tenantId)
+                    .clientSecret(clientSecret)
+                    .build();
         }
 
         if (graphClient == null) {
             graphClient = new GraphServiceClient(_clientSecretCredential,
-                    new String[] { "https://graph.microsoft.com/.default" });
+                    new String[]{"https://graph.microsoft.com/.default"});
         }
     }
-    // </AppOnyAuthConfigSnippet>
 
-    // <GetAppOnlyTokenSnippet>
+
     public static String getAppOnlyToken() throws Exception {
         // Ensure credential isn't null
         if (_clientSecretCredential == null) {
@@ -67,7 +59,7 @@ public class Graph {
         }
 
         // Request the .default scope as required by app-only auth
-        final String[] graphScopes = new String[] {"https://graph.microsoft.com/.default"};
+        final String[] graphScopes = new String[]{"https://graph.microsoft.com/.default"};
 
         final TokenRequestContext context = new TokenRequestContext();
         context.addScopes(graphScopes);
@@ -75,9 +67,7 @@ public class Graph {
         final AccessToken token = _clientSecretCredential.getToken(context).block();
         return token.getToken();
     }
-    // </GetAppOnlyTokenSnippet>
 
-    // <GetUsersSnippet>
     public static UserCollectionResponse getUsers() throws Exception {
         // Ensure client isn't null
         if (graphClient == null) {
@@ -85,43 +75,30 @@ public class Graph {
         }
 
         return graphClient.users().get(requestConfig -> {
-            requestConfig.queryParameters.select = new String[] { "displayName", "id", "mail" };
+            requestConfig.queryParameters.select = new String[]{"displayName", "id", "mail"};
             requestConfig.queryParameters.top = 25;
-            requestConfig.queryParameters.orderby = new String[] { "displayName" };
+            requestConfig.queryParameters.orderby = new String[]{"displayName"};
         });
     }
-    // </GetUsersSnippet>
 
-    // <MakeGraphCallSnippet>
     public static void makeGraphCall() {
-        getImageFromSharePoint();
+        findSiteId();
+        listeDrivesSharePoint();
+//        getImageFromSharePoint();
 //        uploadSmallFileToSharePoint();
 //        uploadLargeFile();
 //        deleteFileToSharePoint();
-        moveFileToSharePoint();
+//        moveFileToSharePoint();
+// listeDrivesSharePoint();
     }
-    // </MakeGraphCallSnippet>
 
     public static void getImageFromSharePoint() {
-        // Get the site ID from the URL
-//        Drive drive = graphClient
-//                .sites()
-//                .bySiteId("wtv7z.sharepoint.com,c15cef79-d8cf-4938-a496-a5c3bc9da541,129d6d3a-54d4-4c67-811d-7d582d602135")
-//                .drives()
-//                .byDriveId("b!ee9cwc_YOEmklqXDvJ2lQTptnRLUVGdMgR19WC1gITWeL3hYv7cHQ7yQ1dol52R0")
-//                .get(requestConfig -> {
-//                    requestConfig.queryParameters.select = new String[]{"id", "driveType", "name"};
-//                    requestConfig.queryParameters.expand = new String[]{"root"};
-//                });
-//        DriveItem root = drive.getRoot();
-//
-
 
         var driveId = "b!ee9cwc_YOEmklqXDvJ2lQTptnRLUVGdMgR19WC1gITWeL3hYv7cHQ7yQ1dol52R0"; // Documents
         // Extra call to get the list of items in the root repository
         DriveItemCollectionResponse result = graphClient.drives().byDriveId(driveId).items().byDriveItemId("root").children().get();
         List<DriveItem> allDriveItems = new LinkedList<>();
-        PageIterator<DriveItem, DriveItemCollectionResponse > pageIterator = null;
+        PageIterator<DriveItem, DriveItemCollectionResponse> pageIterator = null;
         try {
             pageIterator = new PageIterator.Builder<DriveItem, DriveItemCollectionResponse>()
                     .client(graphClient)
@@ -136,10 +113,8 @@ public class Graph {
             throw new RuntimeException(th);
         }
         for (DriveItem item : allDriveItems) {
-            System.out.println(item.getId()+" "+item.getWebUrl());
+            System.out.println(item.getId() + " " + item.getWebUrl());
         }
-        System.out.println("done");
-
     }
 
     public static void uploadSmallFileToSharePoint() {
@@ -151,7 +126,7 @@ public class Graph {
         // id of the Ecole file 01XHULTYDCS5CK42YX5NAIQNEM6FIE44ZY
         var fileName = "test2.txt";
         var folder = "/TestFolder";
-        var itemPath = "root:" + folder + "/" +fileName+":";
+        var itemPath = "root:" + folder + "/" + fileName + ":";
         graphClient.drives().byDriveId(driveId).items().byDriveItemId(itemPath).content().put(inputStream);
 
         System.out.println("done");
@@ -171,12 +146,45 @@ public class Graph {
 
         var fileName = "test2.txt";
         var folder = "/TestFolder";
-        var itemPath = "root:" + folder + "/" +fileName+":";
+        var itemPath = "root:" + folder + "/" + fileName + ":";
         graphClient.drives().byDriveId(driveId).items().byDriveItemId(itemPath).patch(driveItem);
 
         System.out.println("done");
     }
 
+    public static void findSiteId() {
+        graphClient.sites().get().getValue().forEach(site -> {
+            System.out.println("name=" + site.getDisplayName() + " siteId"+ site.getId());
+        });
+    }
+
+    public static void listeDrivesSharePoint() {
+        List<Drive> drives = graphClient
+                .sites()
+                .bySiteId("wtv7z.sharepoint.com,c15cef79-d8cf-4938-a496-a5c3bc9da541,129d6d3a-54d4-4c67-811d-7d582d602135")
+                .drives().get().getValue();
+        drives.forEach(drive -> {
+            System.out.println("name=" + drive.getName() +" driveId="+drive.getId());
+        });
+
+        Drive drive = graphClient
+                .sites()
+                .bySiteId("wtv7z.sharepoint.com,c15cef79-d8cf-4938-a496-a5c3bc9da541,129d6d3a-54d4-4c67-811d-7d582d602135")
+                .drives().byDriveId("b!ee9cwc_YOEmklqXDvJ2lQTptnRLUVGdMgR19WC1gITWeL3hYv7cHQ7yQ1dol52R0").get();
+
+        System.out.println("Drive ID: " + drive.getId());
+        System.out.println("Drive Name: " + drive.getName());
+        System.out.println("Drive Description: " + drive.getDescription());
+
+        Drive drive2 = graphClient
+                .drives().byDriveId("b!ee9cwc_YOEmklqXDvJ2lQTptnRLUVGdMgR19WC1gITV_Lr648sowR4yxa4k4c-B3").get();
+
+        System.out.println("Drive ID: " + drive2.getId());
+        System.out.println("Drive Name: " + drive2.getName());
+        System.out.println("Drive Description: " + drive2.getDescription());
+
+        System.out.println("done");
+    }
 
     public static void deleteFileToSharePoint() {
         // We'll have to decide which upload method to use depending on the size of the file
@@ -185,18 +193,17 @@ public class Graph {
         // id of the Ecole file 01XHULTYDCS5CK42YX5NAIQNEM6FIE44ZY
         var fileName = "test2.txt";
         var folder = "/TestFolder";
-        var itemPath = "root:" + folder + "/" +fileName+":";
+        var itemPath = "root:" + folder + "/" + fileName + ":";
         graphClient.drives().byDriveId(driveId).items().byDriveItemId(itemPath).delete();
         System.out.println("done");
     }
-
 
     public static void uploadLargeFile() {
         // If the file is actually small this can fail!
         var driveId = "b!ee9cwc_YOEmklqXDvJ2lQTptnRLUVGdMgR19WC1gITWeL3hYv7cHQ7yQ1dol52R0"; // Documents
         String folderItemId = "01XHULTYEKCSLHFSMXZRAKJPOB5IRHX7G6";
         String fileName = "test.mp3";
-        String filePath = "/Users/pawel/"+fileName;
+        String filePath = "/Users/pawel/" + fileName;
         // Get an input stream for the file
         File file = new File(filePath);
 
@@ -208,15 +215,15 @@ public class Graph {
         }
         long streamSize = file.length();
 
-// Set body of the upload session request
+        // Set body of the upload session request
         CreateUploadSessionPostRequestBody uploadSessionRequest = new CreateUploadSessionPostRequestBody();
         DriveItemUploadableProperties properties = new DriveItemUploadableProperties();
         properties.getAdditionalData().put("@microsoft.graph.conflictBehavior", "replace");
         uploadSessionRequest.setItem(properties);
 
-// Create an upload session
-// ItemPath does not need to be a path to an existing item
-        var itemPath = "root:/"+fileName+":";
+        // Create an upload session
+        // ItemPath does not need to be a path to an existing item
+        var itemPath = "root:/" + fileName + ":";
         UploadSession uploadSession = graphClient.drives()
                 .byDriveId(driveId)
                 .items()
@@ -224,7 +231,7 @@ public class Graph {
                 .createUploadSession()
                 .post(uploadSessionRequest);
 
-// Create the upload task
+        // Create the upload task
         int maxSliceSize = 320 * 1000;
         LargeFileUploadTask<DriveItem> largeFileUploadTask = null;
         try {
@@ -235,22 +242,16 @@ public class Graph {
                     streamSize,
                     maxSliceSize,
                     DriveItem::createFromDiscriminatorValue);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
+        } catch (IllegalAccessException | IOException | InvocationTargetException | NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
 
         int maxAttempts = 5;
-// Create a callback used by the upload provider
+        // Create a callback used by the upload provider
         IProgressCallback callback = (current, max) -> System.out.println(
                 String.format("Uploaded %d bytes of %d total bytes", current, max));
 
-// Do the upload
+        // Do the upload
         try {
             UploadResult<DriveItem> uploadResult = largeFileUploadTask.upload(maxAttempts, callback);
             if (uploadResult.isUploadSuccessful()) {
@@ -259,13 +260,9 @@ public class Graph {
             } else {
                 System.out.println("Upload failed");
             }
-        } catch (CancellationException ex) {
-            System.out.println("Error uploading: " + ex.getMessage());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
+            System.out.println("Error uploading: " + e.getMessage());
             throw new RuntimeException(e);
         }
-
-        }
+    }
 }
